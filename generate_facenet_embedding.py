@@ -55,7 +55,6 @@ import numpy as np
 import os
 import argparse
 import facenet
-import align.detect_face
 import cv2
 from tqdm import *
 from imgaug import augmenters as iaa
@@ -69,7 +68,9 @@ parser.add_argument('--mset', type=str, default='train', help='train/test mset')
 parser.add_argument('--ignore_unknown', default=False, action='store_true', help='include unknown class or not')
 args = parser.parse_args()
 
+
 sometimes = lambda aug: iaa.Sometimes(0.8, aug)
+
 seq = iaa.Sequential([iaa.Fliplr(0.5),
                       sometimes(iaa.OneOf([iaa.Grayscale(alpha=(0.0, 1.0)),
                                            iaa.AddToHueAndSaturation((-20, 20)),
@@ -91,7 +92,7 @@ def pre_whitten(x):
     return y
 
 
-DATA_ROOT = 'dataset'
+# DATA_ROOT = 'dataset'
 
 if __name__ == '__main__':
     im_width, im_height = args.image_size.split(',')
@@ -109,10 +110,12 @@ if __name__ == '__main__':
             for subject in os.listdir('{}/aligned/{}'.format(args.data_root, args.mset)):
                 if subject == 'unknown' and args.ignore_unknown:
                     continue
-                for r, _, files in os.walk('{}/aligned/{}/{}/{}x{}'.format(args.data_root, args.mset, subject, im_width, im_height)):
+                print('[INFO] Subject: {}'.format(subject))
+                for r, _, files in os.walk(
+                        '{}/aligned/{}/{}/{}x{}'.format(args.data_root, args.mset, subject, im_width, im_height)):
                     for file in tqdm(files):
-                        if '.png' not in file:
-                            continue
+                        # if '.png' not in file:
+                        #     continue
                         fn, fe = os.path.splitext(file)
                         im_path = os.path.join(r, file)
                         im_org = cv2.imread(im_path)

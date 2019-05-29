@@ -34,7 +34,7 @@ if __name__ == '__main__':
             else:
                 if args.ignore_unknown:
                     continue
-            print('Subject:', SUBJECT)
+            print('[INFO] Subject:', SUBJECT)
             sub_dir = '{}/{}'.format(r, SUBJECT)
             # print(sub_dir)
             for sr, _, files in os.walk(sub_dir):

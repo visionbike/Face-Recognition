@@ -12,7 +12,7 @@ from helper import make_if_not_exist
 verbose = False
 
 DATA_ROOT = 'dataset'
-SUBJECT = 'phuc'
+# SUBJECT = 'phuc'
 MSET = 'train'  # train/test
 SCALES = [[96, 112], [112, 112], [150, 150], [160, 160], [224, 224]]
 
@@ -66,92 +66,95 @@ def alignment(im, landmarks_points, width, height):
 
 
 if __name__ == '__main__':
+    DATA_DIR = '{}/{}'.format(DATA_ROOT, MSET)
     print('[INFO] Creating aligned image directory...')
-    for scale in SCALES:
-        ALIGNED_DIR = '{}/aligned/{}/{}/{}x{}'.format(DATA_ROOT, MSET, SUBJECT, scale[0], scale[1])
-        make_if_not_exist(ALIGNED_DIR)
-
-    DATA_DIR = '{}/{}/{}'.format(DATA_ROOT, MSET, SUBJECT)
+    for SUBJECT in os.listdir(DATA_DIR):
+        for scale in SCALES:
+            ALIGNED_DIR = '{}/aligned/{}/{}/{}x{}'.format(DATA_ROOT, MSET, SUBJECT, scale[0], scale[1])
+            make_if_not_exist(ALIGNED_DIR)
 
     print('[INFO] Detecting and aligning faces...')
-    for rdir, _, files in os.walk(DATA_DIR):
-        for file in tqdm(files):
-            im_path = os.path.join(rdir, file)
-            im = io.imread(im_path)
-            landmarks = FACE_ALIGNER.get_landmarks(im)
-            if landmarks is None:
-                print('[INFO] Unknown faces in "{}"'.format(im_path))
-                print('[INFO] Pre-processing image...')
-                for sigma in np.linspace(0., 3., num=11).tolist():
-                    seq = ia.augmenters.GaussianBlur(sigma)
-                    im_aug = seq.augment_image(im)
-                    landmarks = FACE_ALIGNER.get_landmarks(im_aug)
-                    if landmarks is not None:
-                        print('[INFO] sigma:', sigma)
-                        points = landmarks[0]
-                        p1 = np.mean(points[36:42, :], axis=0)
-                        p2 = np.mean(points[42:48, :], axis=0)
-                        p3 = points[33, :]
-                        p4 = points[48, :]
-                        p5 = points[54, :]
+    for SUBJECT in os.listdir(DATA_DIR):
+        SUBJECT_DATA_DIR = '{}/{}'.format(DATA_DIR, SUBJECT)
+        print('[INFO] Subject: {}'.format(SUBJECT))
+        for rdir, _, files in os.walk(SUBJECT_DATA_DIR):
+            for file in tqdm(files):
+                im_path = os.path.join(rdir, file)
+                im = io.imread(im_path)
+                landmarks = FACE_ALIGNER.get_landmarks(im)
+                if landmarks is None:
+                    print('[INFO] Unknown faces in "{}"'.format(im_path))
+                    print('[INFO] Pre-processing image...')
+                    for sigma in np.linspace(0., 3., num=11).tolist():
+                        seq = ia.augmenters.GaussianBlur(sigma)
+                        im_aug = seq.augment_image(im)
+                        landmarks = FACE_ALIGNER.get_landmarks(im_aug)
+                        if landmarks is not None:
+                            print('[INFO] sigma:', sigma)
+                            points = landmarks[0]
+                            p1 = np.mean(points[36:42, :], axis=0)
+                            p2 = np.mean(points[42:48, :], axis=0)
+                            p3 = points[33, :]
+                            p4 = points[48, :]
+                            p5 = points[54, :]
 
-                        if np.mean([p1[1], p2[1]]) < p3[1] < np.mean([p4[1], p5[1]]) \
-                                and np.min([p4[1], p5[1]]) > np.max([p1[1], p2[1]]) \
-                                and np.min([p1[1], p2[1]]) < p3[1] < np.max([p4[1], p5[1]]):
-                            landmarks_points = np.array([p1, p2, p3, p4, p5], dtype=np.float32)
+                            if np.mean([p1[1], p2[1]]) < p3[1] < np.mean([p4[1], p5[1]]) \
+                                    and np.min([p4[1], p5[1]]) > np.max([p1[1], p2[1]]) \
+                                    and np.min([p1[1], p2[1]]) < p3[1] < np.max([p4[1], p5[1]]):
+                                landmarks_points = np.array([p1, p2, p3, p4, p5], dtype=np.float32)
 
-                            cv_im = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
-
-                            if verbose:
-                                for point in points:
-                                    cv2.circle(cv_im, tuple(point), 2, (255, 255, 255), 2, cv2.LINE_AA)
-                                cv2.imshow('im', cv_im)
-                                cv2.waitKey(0)
-
-                            for scale in SCALES:
-                                aligned_face_im = alignment(cv_im, landmarks_points, scale[0], scale[1])
+                                cv_im = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
 
                                 if verbose:
-                                    cv2.imshow('face_im', aligned_face_im)
-                                    cv2.waitKey(2)
+                                    for point in points:
+                                        cv2.circle(cv_im, tuple(point), 2, (255, 255, 255), 2, cv2.LINE_AA)
+                                    cv2.imshow('im', cv_im)
+                                    cv2.waitKey(0)
 
-                                cv2.imwrite('{}/aligned/{}/{}/{}x{}/{}'.format(DATA_ROOT,
-                                                                               MSET,
-                                                                               SUBJECT,
-                                                                               scale[0],
-                                                                               scale[1],
-                                                                               file),
-                                            aligned_face_im)
-                            break
+                                for scale in SCALES:
+                                    aligned_face_im = alignment(cv_im, landmarks_points, scale[0], scale[1])
 
-            else:
-                points = landmarks[0]
-                p1 = np.mean(points[36:42, :], axis=0)
-                p2 = np.mean(points[42:48, :], axis=0)
-                p3 = points[33, :]
-                p4 = points[48, :]
-                p5 = points[54, :]
-                landmarks_points = np.array([p1, p2, p3, p4, p5], dtype=np.float32)
+                                    if verbose:
+                                        cv2.imshow('face_im', aligned_face_im)
+                                        cv2.waitKey(2)
 
-                cv_im = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
+                                    cv2.imwrite('{}/aligned/{}/{}/{}x{}/{}'.format(DATA_ROOT,
+                                                                                   MSET,
+                                                                                   SUBJECT,
+                                                                                   scale[0],
+                                                                                   scale[1],
+                                                                                   file),
+                                                aligned_face_im)
+                                break
 
-                if verbose:
-                    for point in points:
-                        cv2.circle(cv_im, tuple(point), 2, (255, 255, 255), 2, cv2.LINE_AA)
-                    cv2.imshow('im', cv_im)
-                    cv2.waitKey(0)
+                else:
+                    points = landmarks[0]
+                    p1 = np.mean(points[36:42, :], axis=0)
+                    p2 = np.mean(points[42:48, :], axis=0)
+                    p3 = points[33, :]
+                    p4 = points[48, :]
+                    p5 = points[54, :]
+                    landmarks_points = np.array([p1, p2, p3, p4, p5], dtype=np.float32)
 
-                for scale in SCALES:
-                    aligned_face_im = alignment(cv_im, landmarks_points, scale[0], scale[1])
+                    cv_im = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
 
                     if verbose:
-                        cv2.imshow('face_im', aligned_face_im)
-                        cv2.waitKey(2)
+                        for point in points:
+                            cv2.circle(cv_im, tuple(point), 2, (255, 255, 255), 2, cv2.LINE_AA)
+                        cv2.imshow('im', cv_im)
+                        cv2.waitKey(0)
 
-                    cv2.imwrite('{}/aligned/{}/{}/{}x{}/{}'.format(DATA_ROOT,
-                                                                   MSET,
-                                                                   SUBJECT,
-                                                                   scale[0],
-                                                                   scale[1],
-                                                                   file),
-                                aligned_face_im)
+                    for scale in SCALES:
+                        aligned_face_im = alignment(cv_im, landmarks_points, scale[0], scale[1])
+
+                        if verbose:
+                            cv2.imshow('face_im', aligned_face_im)
+                            cv2.waitKey(2)
+
+                        cv2.imwrite('{}/aligned/{}/{}/{}x{}/{}'.format(DATA_ROOT,
+                                                                       MSET,
+                                                                       SUBJECT,
+                                                                       scale[0],
+                                                                       scale[1],
+                                                                       file),
+                                    aligned_face_im)
