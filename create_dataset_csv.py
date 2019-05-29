@@ -20,10 +20,9 @@ if __name__ == '__main__':
     if not os.path.isdir(DATA_PATH):
         print('"{}" not found!'.format(DATA_PATH))
         exit(-1)
-    print(args.ignore_unknown)
+    # print(args.ignore_unknown)
 
     im_files = []
-    im_subjects = []
     im_labels = []
 
     # r=root, d=directory, f=files
@@ -40,9 +39,9 @@ if __name__ == '__main__':
             # print(sub_dir)
             for sr, _, files in os.walk(sub_dir):
                 for f in tqdm(files):
-                    im_files.append(f)
-                    im_subjects.append(SUBJECT)
+                    im_files.append(SUBJECT + '_' + f)
+                    # im_subjects.append(SUBJECT)
                     im_labels.append(0 if SUBJECT == 'unknown'else i)
 
-    df = pd.DataFrame(list(zip(im_files, im_subjects, im_labels)), columns=['image', 'subject', 'labels'])
+    df = pd.DataFrame(list(zip(im_files, im_labels)), columns=['image', 'label'])
     df.to_csv(args.output, index=None)
