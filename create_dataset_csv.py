@@ -27,12 +27,13 @@ if __name__ == '__main__':
 
     # r=root, d=directory, f=files
     for r, d, _ in os.walk(DATA_PATH):
-        i = 0
+        if args.ignore_unknown:
+            i = 0
+        else:
+            i = 1
         for SUBJECT in d:
-            if SUBJECT != 'unknown':
-                i += 1
-            else:
-                if args.ignore_unknown:
+            if args.ignore_unknown:
+                if SUBJECT == 'unknown':
                     continue
             print('[INFO] Subject:', SUBJECT)
             sub_dir = '{}/{}'.format(r, SUBJECT)
@@ -41,7 +42,8 @@ if __name__ == '__main__':
                 for f in tqdm(files):
                     im_files.append(SUBJECT + '_' + f)
                     # im_subjects.append(SUBJECT)
-                    im_labels.append(0 if SUBJECT == 'unknown'else i)
+                    im_labels.append(0 if SUBJECT == 'unknown' else i)
+            i += 1
 
     df = pd.DataFrame(list(zip(im_files, im_labels)), columns=['image', 'label'])
     df.to_csv(args.output, index=None)
