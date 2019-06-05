@@ -1,16 +1,13 @@
 import os
 import random
-import threading
 import pandas as pd
 import numpy as np
 from sklearn.utils import shuffle
-import tensorflow as tf
 from tensorflow.python.keras.optimizers import Adam, RMSprop
 from tensorflow.python.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau, CSVLogger
 from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers import Input, Conv2D, Activation, BatchNormalization, Dense, Dropout, Flatten, Lambda, concatenate, add
 from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.utils.multi_gpu_utils import multi_gpu_model
 from tensorflow.python.keras.utils.np_utils import to_categorical
 from clr_callback import CyclicLR
 
@@ -19,7 +16,7 @@ EPOCHS = 200
 NUM_FOLDS = 5
 NUM_PARTS = 4
 INPUT_DIMS = 512
-NUM_CLASSES = 3
+NUM_CLASSES = 4
 CSV_REFINED_FILE_NAME = 'train_ignore_unknown_refined.csv'
 
 
@@ -53,9 +50,12 @@ def get_y_true(df):
 
 def Model():
     model = Sequential()
-    model.add(Dense(2048, input_dim=INPUT_DIMS, kernel_initializer='uniform', bias_initializer='uniform'))
+    model.add(Dense(512, input_dim=INPUT_DIMS, kernel_initializer='uniform', bias_initializer='uniform'))
     model.add(Activation('relu'))
     model.add(Dropout(0.25))
+    # model.add(Dense(1024, kernel_initializer='uniform', bias_initializer='uniform'))
+    # model.add(Activation('relu'))
+    # model.add(Dropout(0.25))
     model.add(Dense(NUM_CLASSES, kernel_initializer='uniform', bias_initializer='uniform'))
     model.add(Activation('softmax'))
     return model
@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
             WEIGHTS_BEST = 'weights/best_weight_part{}_fold{}.hdf5'.format(part, fold)
 
-            clr = CyclicLR(base_lr=1e-7, max_lr=1e-3, step_size=6 * train_steps, mode='exp_range', gamma=0.99994)
+            clr = CyclicLR(base_lr=1e-7, max_lr=1e-3, step_size=6*train_steps, mode='exp_range', gamma=0.99994)
             early_stopping = EarlyStopping(monitor='val_acc', patience=20, verbose=1, mode='max')
             save_checkpoint = ModelCheckpoint(WEIGHTS_BEST, monitor='val_acc', verbose=1, save_weights_only=True,
                                               save_best_only=True, mode='max')
