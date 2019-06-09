@@ -5,22 +5,22 @@ import pandas as pd
 import numpy as np
 from tqdm import *
 
-
-MODEL_NAME = '20180402-114759'
-CSV_REFINED_FILE_NAME = 'train_ignore_unknown_refined.csv'
+embed_dims = 128
+MODEL_NAME = 'nn4_small2'
+CSV_REFINED_FILE_NAME = 'train_refined.csv'
 
 
 def prepare_train_data(file_name):
     name = file_name.split('.')[0]
     emb_path = '../models/facenet/embeddings/{}/train/{}'.format(MODEL_NAME, name + '.npy')
-    emb = np.load(emb_path).reshape(512)
+    emb = np.load(emb_path).reshape(embed_dims)
     return emb
 
 
 def prepare_train_aug_data(file_name):
     name = file_name.split('.')[0]
     emb_path = '../models/facenet/embeddings/{}/train/{}'.format(MODEL_NAME, name + '_augmentation.npy')
-    emb = np.load(emb_path).reshape(100, 512)
+    emb = np.load(emb_path).reshape(100, embed_dims)
     return emb
 
 

@@ -15,9 +15,9 @@ BATCH_SIZE = 32
 EPOCHS = 200
 NUM_FOLDS = 5
 NUM_PARTS = 4
-INPUT_DIMS = 512
-NUM_CLASSES = 4
-CSV_REFINED_FILE_NAME = 'train_ignore_unknown_refined.csv'
+INPUT_DIMS = 128
+NUM_CLASSES = 5
+CSV_REFINED_FILE_NAME = 'train_refined.csv'
 
 
 def train_generator(x_train_fold, y_train_fold, train_size, batch_size):
@@ -25,9 +25,9 @@ def train_generator(x_train_fold, y_train_fold, train_size, batch_size):
         x_train_fold, y_train_fold = shuffle(x_train_fold, y_train_fold)
         for start in range(0, train_size, batch_size):
             end = min(start + batch_size, train_size)
-            x_batch = np.array([], dtype=np.float32).reshape(0, 512)
+            x_batch = np.array([], dtype=np.float32).reshape(0, INPUT_DIMS)
             for i in range(start, end, 1):
-                x_batch = np.vstack((x_batch, x_train_fold[i, random.randint(0, 99), :].reshape(1, 512)))
+                x_batch = np.vstack((x_batch, x_train_fold[i, random.randint(0, 99), :].reshape(1, INPUT_DIMS)))
             y_batch = y_train_fold[start: end, :]
             yield x_batch, y_batch
 
@@ -50,11 +50,11 @@ def get_y_true(df):
 
 def Model():
     model = Sequential()
-    model.add(Dense(512, input_dim=INPUT_DIMS, kernel_initializer='uniform', bias_initializer='uniform'))
+    model.add(Dense(256, input_dim=INPUT_DIMS, kernel_initializer='uniform', bias_initializer='uniform'))
     model.add(Activation('relu'))
-    model.add(Dropout(0.25))
-    # model.add(Dense(1024, kernel_initializer='uniform', bias_initializer='uniform'))
-    # model.add(Activation('relu'))
+    # model.add(Dropout(0.25))
+    model.add(Dense(256, kernel_initializer='uniform', bias_initializer='uniform'))
+    model.add(Activation('relu'))
     # model.add(Dropout(0.25))
     model.add(Dense(NUM_CLASSES, kernel_initializer='uniform', bias_initializer='uniform'))
     model.add(Activation('softmax'))
@@ -68,8 +68,8 @@ if __name__ == '__main__':
     x_train_aug = np.load('train_aug_data.npy')
     y_train = get_y_true(train_df)
 
-    if not os.path.exists('weights'):
-        os.makedirs('weights')
+    if not os.path.exists('weights2'):
+        os.makedirs('weights2')
 
     train_log = open('train_log.txt', 'w')
     loss_average = 0.0
@@ -97,10 +97,10 @@ if __name__ == '__main__':
 
             print('[INFO] TRAIN SIZE:%d VALID SIZE:%d' % (train_size, valid_size))
 
-            WEIGHTS_BEST = 'weights/best_weight_part{}_fold{}.hdf5'.format(part, fold)
+            WEIGHTS_BEST = 'weights2/best_weight_part{}_fold{}.hdf5'.format(part, fold)
 
             clr = CyclicLR(base_lr=1e-7, max_lr=1e-3, step_size=6*train_steps, mode='exp_range', gamma=0.99994)
-            early_stopping = EarlyStopping(monitor='val_acc', patience=20, verbose=1, mode='max')
+            early_stopping = EarlyStopping(monitor='val_acc', patience=25, verbose=1, mode='max')
             save_checkpoint = ModelCheckpoint(WEIGHTS_BEST, monitor='val_acc', verbose=1, save_weights_only=True,
                                               save_best_only=True, mode='max')
             callbacks = [save_checkpoint, early_stopping, clr]
