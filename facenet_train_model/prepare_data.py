@@ -24,6 +24,38 @@ def prepare_train_aug_data(file_name):
     return emb
 
 
+def prepare_data_(non_unknow = False):
+    train_df = pd.read_csv('../{}'.format(CSV_REFINED_FILE_NAME))
+    train_n = 'train_data.npy'
+    aug_n = 'train_aug_data.npy'
+    if non_unknow == True:
+        print(len(train_df['image']), '-->', end='')
+        train_df = train_df.loc[train_df['image'].str[:7] != 'unknown']
+        print(len(train_df))
+        train_n = 'train_data_noun.npy'
+        aug_n = 'train_aug_data_noun.npy'
+
+    # prepare train data
+    print('[INFO] Prepare train data...')
+    p = Pool(8)
+    train_data = p.map(func=prepare_train_data, iterable=train_df.image.values.tolist())
+    p.close()
+    train_data = np.array(train_data)
+    print('[INFO] Shape:', train_data.shape)
+    np.save(train_n, train_data)
+    train_data = []
+
+    # prepare augmented train data
+    print('[INFO] Prepare augmented train data...')
+    p = Pool(8)
+    train_aug_data = p.map(func=prepare_train_aug_data, iterable=train_df.image.values.tolist())
+    p.close()
+    train_aug_data = np.array(train_aug_data)
+    print('[INFO] Shape:', train_aug_data.shape)
+    np.save(aug_n, train_aug_data)
+    train_aug_data = []
+
+
 if __name__ == '__main__':
     train_df = pd.read_csv('../{}'.format(CSV_REFINED_FILE_NAME))
 
