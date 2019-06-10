@@ -242,7 +242,7 @@ def train_knn(embeddings, labels, nlabels):
         pickle.dump(neigh, file)
 
     porter = Porter(neigh, language='java')
-    output = porter.export()
+    output = porter.export(export_data = True, export_filename="knn.json", embed_data=True)
 
     with open('KNeighborsClassifier.java', 'w') as f:
         f.write(output)
@@ -276,7 +276,7 @@ def train_svm(embeddings, labels, nlabels):
         pickle.dump(svm, file)
 
     porter = Porter(svm, language='java')
-    output = porter.export()
+    output = porter.export(export_data = True, export_filename="svm.json", embed_data=True)
 
     with open('svm_SVC.java', 'w') as f:
         f.write(output)
@@ -297,7 +297,7 @@ def predict_svm(embeddings, nlabels=None):
     # return [nlabels[cls_] for cls_ in cls_pre]
     return cls_pre
 
-non_unknow = True
+non_unknow = False
 
 prepare_data_(non_unknow)
 nlabels = ['hank', 'pieter', 'phuc', 'palo', 'unknown']
@@ -310,14 +310,15 @@ run_svm = True
 
 if run_knn == True:
     print("\n Knn running")
-    train_knn(x_embed, y_train, nlabels)
+    train_knn(embed, arr_lb, nlabels)
     pred = predict_knn(embeddings)
     print("true: ", y_true)
     print(accuracy_score(pred, y_true))
 
 if run_svm == True:
     print("\n Svm running")
-    train_svm(x_embed, y_train, nlabels)
+    # train_svm(embed, arr_lb, nlabels)
     pred = predict_svm(embeddings)
+    print(embeddings[0])
     print("true: ", y_true)
     print(accuracy_score(pred, y_true))
